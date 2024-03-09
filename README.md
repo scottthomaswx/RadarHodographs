@@ -11,3 +11,5 @@ Dependencies:
 * Datetime
 * Pint
 * Math
+* Requests
+* OS
