@@ -1,12 +1,11 @@
 #Install Needed Packages
-
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from metpy.units import units
 import pyart
 import numpy as np
 from metpy.plots import Hodograph
-import nexradaws
-import pytz
 import metpy.calc as mpcalc
 from datetime import datetime
 import matplotlib.colors as colors
@@ -41,14 +40,11 @@ data_ceiling = 8000 #Max Data Height in Feet AGL
 range_type = 'Static' #Enter Dynamic For Changing Range From Values or Static for Constant Range Value
 static_value = 70 # Enter Static Hodo Range or 999 To Not Use
 
-#Storm Motion
-storm_motion_method = 'Bunkers Right' #Choose Mean Wind, Bunkers Left, Bunkers Right, User Selected, Corfidi Downshear, Corfidi Upshear
-
 #Surface Winds
 sfc_status = 'Preset'
 #Run To Loop Radar Files
-
-dir = '/content/radar_data'
+filecount=0
+dir = '/home/scott.r.thomas/Downloads/TDTW'
 for file in os.listdir(dir):
   if radar_id.startswith('K') or radar_id.startswith('P'):
     date = file.split('_')[3]
@@ -80,7 +76,7 @@ for file in os.listdir(dir):
 
     pyart.io.write_cfradial(f'/content/cf_radial/{file}.nc', radar, format='NETCDF4')
 
-  if radar_id.startswith('T')
+  if radar_id.startswith('T'):
     date = file.split('_')[3]
     time = file.split('_')[4]
 
@@ -146,7 +142,21 @@ for file in os.listdir(dir):
     speed = np.sqrt(u_avg**2 + v_avg**2)
     u_avg *= 1.944
     v_avg *= 1.944
-    # @title
+
+  nancount=0
+  for entry in u_avg[0:62]:
+      if np.isnan(entry):
+        nancount +=1
+
+  if nancount != 0:
+      storm_motion_method = 'User Selected' #Choose Mean Wind, Bunkers Left, Bunkers Right, User Selected, Corfidi Downshear, Corfidi Upshear
+
+      sm_dir = 308
+      sm_speed = 21
+
+  else:
+      storm_motion_method = 'Bunkers Right' #Choose Mean Wind, Bunkers Left, Bunkers Right, User Selected, Corfidi Downshear, Corfidi Upshear
+
   API_TOKEN = '86eac26a58a647e69b8c69feaef76bae'
   API_ROOT = "https://api.synopticdata.com/v2/"
 
@@ -1030,7 +1040,7 @@ for file in os.listdir(dir):
   plt.legend(loc = 'right', bbox_to_anchor=(1.885, 0.55),
             ncol=2, fancybox=True, shadow=True, fontsize=11, facecolor='white', framealpha=1.0,
               labelcolor='k', borderpad=0.7)
-  plt.title(f'Hodograph from {radar_id} Valid {timearr[2]}-{timearr[3]}-{timearr[0]}{timearr[1]} {datearr[0]}:{datearr[1]}:{datearr[2]} {timezone}', fontsize = 16, weight = 'bold')
+  plt.title(f'Hodograph from {radar_id} Valid {datearr[2]}-{datearr[3]}-{datearr[0]}{datearr[1]} {timearr[0]}:{timearr[1]}:{timearr[2]} {timezone}', fontsize = 16, weight = 'bold')
 
   try:
     #Plot SRW wrt Hgt
@@ -1263,7 +1273,7 @@ for file in os.listdir(dir):
   plt.legend(loc = 'right', bbox_to_anchor=(1.885, 0.55),
             ncol=2, fancybox=True, shadow=True, fontsize=11, facecolor='white', framealpha=1.0,
               labelcolor='k', borderpad=0.7)
-  plt.title(f'SR Hodograph from {radar_id} Valid {timearr[2]}-{timearr[3]}-{timearr[0]}{timearr[1]} {datearr[0]}:{datearr[1]}:{datearr[2]} {timezone}', fontsize = 16, weight = 'bold')
+  plt.title(f'SR Hodograph from {radar_id} Valid {datearr[2]}-{datearr[3]}-{datearr[0]}{datearr[1]} {timearr[0]}:{timearr[1]}:{timearr[2]} {timezone}', fontsize = 16, weight = 'bold')
 
   try:
   #Plot SRW wrt Hgt
@@ -1295,3 +1305,7 @@ for file in os.listdir(dir):
   #Add Title and Legend and Save Figure
   del sfc_angle, sfc_u, sfc_v
   plt.savefig(f'/content/sr_hodos/SR_Hodograph_{radar_id}_{date}_{time}.png', bbox_inches='tight')
+  filecount+=1
+  if filecount == len(os.listdir(dir)):
+    print("Files Complete")
+    break
